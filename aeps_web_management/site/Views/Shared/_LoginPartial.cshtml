@@ -1,10 +1,40 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using CIAT.DAPA.AEPS.Users.Models
 
+@using Microsoft.AspNetCore.Builder
+@using Microsoft.AspNetCore.Http.Features
+@using Microsoft.AspNetCore.Localization
+@using Microsoft.Extensions.Options
+
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
+@inject IOptions<RequestLocalizationOptions> LocOptions
 
 <ul class="navbar-nav navbar-right">
+    @{
+        var requestCulture = Context.Features.Get<IRequestCultureFeature>();
+        var cultureItems = LocOptions.Value.SupportedUICultures
+            .Select(c => new SelectListItem { Value = c.Name, Text = c.DisplayName })
+            .ToList();
+        var returnUrl = string.IsNullOrEmpty(Context.Request.Path) ? "~/" : $"~{Context.Request.Path.Value}";
+    }
+    <li class="dropdown">
+        <a class="dropdown-toggle nav-link dropdown-toggle nav-link-lg nav-link-user" href="#" data-toggle="dropdown" id="drop_language"  aria-haspopup="true" aria-expanded="true">
+            @requestCulture.RequestCulture.UICulture.Name.ToUpper().Substring(0, 2) <span class="caret"></span>
+        </a>
+        <ul class="drop_language dropdown-menu" aria-labelledby="drop_language">
+            @foreach (var s in cultureItems)
+            {
+                <li style="padding:5px 15px;">
+                    <form id="selectLanguage_@s.Value" asp-controller="Home" asp-action="SetLanguage" asp-route-returnUrl="@returnUrl"
+                          method="post" class="form-horizontal" role="form">
+                        <input type="hidden" name="culture" id="culture" value="@s.Value" />
+                        <a onclick="$('#selectLanguage_@s.Value').submit();" style="cursor:pointer;">@s.Value.ToUpper().Substring(0, 2)</a>
+                    </form>
+                </li>
+            }
+        </ul>
+    </li>
 
     @if (SignInManager.IsSignedIn(User))
     {

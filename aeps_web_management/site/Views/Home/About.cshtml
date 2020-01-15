@@ -1,7 +1,25 @@
 ﻿@{
-    ViewData["Title"] = "About";
+    ViewData["Title"] = Localizer["Title"];
+    ViewData["Action"] = Localizer["Action"];
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<h2>@ViewData["Title"]</h2>
-<h3>@ViewData["Message"]</h3>
 
-<p>Use this area to provide additional information.</p>
+<h2 class="section-title">@ViewData["Title"]</h2>
+
+<div class="card">
+
+    <div class="card-body">
+        <p>
+            @Localizer["Content"]
+        </p>
+    </div>
+</div>
+
+<div class="card">
+
+    <div class="card-body">
+        <p>
+            @Localizer["Partners"]
+        </p>
+    </div>
+</div>

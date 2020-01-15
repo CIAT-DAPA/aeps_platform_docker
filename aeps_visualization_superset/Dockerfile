@@ -1,7 +1,11 @@
+# https://github.com/amancevice/docker-superset/blob/master/Dockerfile
+
 ARG NODE_VERSION=latest
 ARG PYTHON_VERSION=latest
 
+######################################################################
 # --- Build assets with NodeJS
+######################################################################
 
 FROM node:${NODE_VERSION} AS build
 
@@ -19,7 +23,9 @@ WORKDIR ${SUPERSET_HOME}/superset/assets
 RUN npm install && \
     npm run build
 
+######################################################################
 # --- Build dist package with Python 3
+######################################################################
 
 FROM python:${PYTHON_VERSION} AS dist
 
@@ -33,7 +39,9 @@ COPY requirements-db.txt .
 RUN python setup.py sdist && \
     tar czfv /tmp/superset.tar.gz requirements.txt requirements-db.txt dist
 
+######################################################################
 # --- Install dist package and finalize app
+######################################################################
 
 FROM python:${PYTHON_VERSION} AS final
 
@@ -42,19 +50,21 @@ ENV GUNICORN_BIND=0.0.0.0:8088 \
     GUNICORN_LIMIT_REQUEST_FIELD_SIZE=0 \
     GUNICORN_LIMIT_REQUEST_LINE=0 \
     GUNICORN_TIMEOUT=60 \
-    GUNICORN_WORKERS=2 \
+    GUNICORN_WORKERS=3 \
+    GUNICORN_THREADS=4 \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     PYTHONPATH=/etc/superset:/home/superset:$PYTHONPATH \
     SUPERSET_REPO=apache/incubator-superset \
     SUPERSET_VERSION=${SUPERSET_VERSION} \
     SUPERSET_HOME=/var/lib/superset
-ENV GUNICORN_CMD_ARGS="--workers ${GUNICORN_WORKERS} --timeout ${GUNICORN_TIMEOUT} --bind ${GUNICORN_BIND} --limit-request-line ${GUNICORN_LIMIT_REQUEST_LINE} --limit-request-field_size ${GUNICORN_LIMIT_REQUEST_FIELD_SIZE}"
+ENV GUNICORN_CMD_ARGS="--workers ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --timeout ${GUNICORN_TIMEOUT} --bind ${GUNICORN_BIND} --limit-request-line ${GUNICORN_LIMIT_REQUEST_LINE} --limit-request-field_size ${GUNICORN_LIMIT_REQUEST_FIELD_SIZE}"
 
 # Create superset user & install dependencies
 WORKDIR /tmp/superset
 COPY --from=dist /tmp/superset.tar.gz .
-RUN useradd -U -m superset && \
+RUN groupadd supergroup && \
+    useradd -U -m -G supergroup superset && \
     mkdir -p /etc/superset && \
     mkdir -p ${SUPERSET_HOME} && \
     chown -R superset:superset /etc/superset && \
@@ -66,6 +76,7 @@ RUN useradd -U -m superset && \
         default-libmysqlclient-dev \
         freetds-bin \
         freetds-dev \
+        libaio1 \
         libffi-dev \
         libldap2-dev \
         libpq-dev \
@@ -80,6 +91,7 @@ RUN useradd -U -m superset && \
 
 # Configure Filesystem
 COPY bin /usr/local/bin
+COPY ./conf/superset_config.py /etc/superset/
 WORKDIR /home/superset
 VOLUME /etc/superset \
        /home/superset \
@@ -90,3 +102,5 @@ EXPOSE 8088
 HEALTHCHECK CMD ["curl", "-f", "http://localhost:8088/health"]
 CMD ["gunicorn", "superset:app"]
 USER superset
+
+# docker build -t stevensotelo/aeps_superset:latest .

@@ -1,4 +1,31 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿function search_text() {
+    // Declare variables
+    var input, filter, table, tr, td, i, txtValue, found;
+    input = document.getElementById("txt_search");
+    filter = input.value.toUpperCase();
+    table = document.getElementById("index_list");
+    tr = table.getElementsByTagName("tr");
 
-// Write your JavaScript code.
+    // Loop through all table rows, and hide those who don't match the search query
+    for (i = 1; i < tr.length; i++) {
+        tds = tr[i].getElementsByTagName("td");
+        found = false;
+        for (j = 0; j < tds.length - 2; j++) {
+            td = tds[j];
+            if (td) {
+                txtValue = td.textContent || td.innerText;
+                found = txtValue.toUpperCase().indexOf(filter) > -1;
+                if (found)
+                    break;
+            }
+
+        }
+
+        if (found) {
+            tr[i].style.display = "";
+        } else {
+            tr[i].style.display = "none";
+        }
+
+    }
+}
