@@ -1,72 +1,26 @@
-# https://github.com/amancevice/docker-superset/blob/master/Dockerfile
+FROM python:3.7
 
-ARG NODE_VERSION=latest
-ARG PYTHON_VERSION=latest
-
-######################################################################
-# --- Build assets with NodeJS
-######################################################################
-
-FROM node:${NODE_VERSION} AS build
-
-# Superset version to build
-ARG SUPERSET_VERSION=master
-ENV SUPERSET_HOME=/var/lib/superset/
-
-# Download source
-WORKDIR ${SUPERSET_HOME}
-RUN wget -O /tmp/superset.tar.gz https://github.com/apache/incubator-superset/archive/${SUPERSET_VERSION}.tar.gz && \
-    tar xzf /tmp/superset.tar.gz -C ${SUPERSET_HOME} --strip-components=1
-
-# Build assets
-WORKDIR ${SUPERSET_HOME}/superset/assets
-RUN npm install && \
-    npm run build
-
-######################################################################
-# --- Build dist package with Python 3
-######################################################################
-
-FROM python:${PYTHON_VERSION} AS dist
-
-# Copy prebuilt workspace into stage
-ENV SUPERSET_HOME=/var/lib/superset/
-WORKDIR ${SUPERSET_HOME}
-COPY --from=build ${SUPERSET_HOME} .
-COPY requirements-db.txt .
-
-# Create package to install
-RUN python setup.py sdist && \
-    tar czfv /tmp/superset.tar.gz requirements.txt requirements-db.txt dist
-
-######################################################################
-# --- Install dist package and finalize app
-######################################################################
-
-FROM python:${PYTHON_VERSION} AS final
+# Superset version
+ARG SUPERSET_VERSION=0.35.2
 
 # Configure environment
 ENV GUNICORN_BIND=0.0.0.0:8088 \
     GUNICORN_LIMIT_REQUEST_FIELD_SIZE=0 \
     GUNICORN_LIMIT_REQUEST_LINE=0 \
     GUNICORN_TIMEOUT=60 \
-    GUNICORN_WORKERS=3 \
-    GUNICORN_THREADS=4 \
+    GUNICORN_WORKERS=2 \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     PYTHONPATH=/etc/superset:/home/superset:$PYTHONPATH \
     SUPERSET_REPO=apache/incubator-superset \
     SUPERSET_VERSION=${SUPERSET_VERSION} \
     SUPERSET_HOME=/var/lib/superset
-ENV GUNICORN_CMD_ARGS="--workers ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --timeout ${GUNICORN_TIMEOUT} --bind ${GUNICORN_BIND} --limit-request-line ${GUNICORN_LIMIT_REQUEST_LINE} --limit-request-field_size ${GUNICORN_LIMIT_REQUEST_FIELD_SIZE}"
+ENV GUNICORN_CMD_ARGS="--workers ${GUNICORN_WORKERS} --timeout ${GUNICORN_TIMEOUT} --bind ${GUNICORN_BIND} --limit-request-line ${GUNICORN_LIMIT_REQUEST_LINE} --limit-request-field_size ${GUNICORN_LIMIT_REQUEST_FIELD_SIZE}"
 
 # Create superset user & install dependencies
-WORKDIR /tmp/superset
-COPY --from=dist /tmp/superset.tar.gz .
-RUN groupadd supergroup && \
-    useradd -U -m -G supergroup superset && \
-    mkdir -p /etc/superset && \
-    mkdir -p ${SUPERSET_HOME} && \
+RUN useradd -U -m superset && \
+    mkdir /etc/superset  && \
+    mkdir ${SUPERSET_HOME} && \
     chown -R superset:superset /etc/superset && \
     chown -R superset:superset ${SUPERSET_HOME} && \
     apt-get update && \
@@ -76,7 +30,6 @@ RUN groupadd supergroup && \
         default-libmysqlclient-dev \
         freetds-bin \
         freetds-dev \
-        libaio1 \
         libffi-dev \
         libldap2-dev \
         libpq-dev \
@@ -85,22 +38,58 @@ RUN groupadd supergroup && \
         libsasl2-modules-gssapi-mit \
         libssl1.0 && \
     apt-get clean && \
-    tar xzf superset.tar.gz && \
-    pip install dist/*.tar.gz -r requirements.txt -r requirements-db.txt && \
-    rm -rf ./*
+    rm -r /var/lib/apt/lists/* 
+COPY conf/database-dependencies.txt .
+
+RUN curl https://raw.githubusercontent.com/${SUPERSET_REPO}/${SUPERSET_VERSION}/requirements.txt -o requirements.txt && \
+    pip install --no-cache-dir -r requirements.txt && \
+    rm requirements.txt && \
+    pip install --no-cache-dir -r database-dependencies.txt && \
+    #pip install --no-cache-dir \
+        #flask-cors==3.0.3 \
+        #lask-mail==0.9.1 \
+        #flask-oauth==0.12 \
+        #flask_oauthlib==0.9.5 \
+        #gevent==1.2.2 \
+        #impyla==0.14.0 \
+        #infi.clickhouse-orm==1.0.2 \
+        #mysqlclient==1.3.7 \
+        #psycopg2==2.6.1 \
+        #pyathena==1.5.1 \
+        #pybigquery==0.4.10 \
+        #pyhive==0.5.1 \
+        #pyldap==2.4.28 \
+        #pymssql==2.1.3 \
+        #redis==2.10.5 \
+        #sqlalchemy-clickhouse==0.1.5.post0 \
+        #sqlalchemy-redshift==0.7.1 \
+        #werkzeug==0.14.1 && \
+    pip install apache-superset==${SUPERSET_VERSION}
 
 # Configure Filesystem
-COPY bin /usr/local/bin
-COPY ./conf/superset_config.py /etc/superset/
-WORKDIR /home/superset
-VOLUME /etc/superset \
-       /home/superset \
+COPY conf/entrypoint /usr/local/bin/
+
+CMD sh /usr/local/bin/entrypoint
+
+VOLUME /home/superset \
+       /etc/superset \
        /var/lib/superset
 
-# Finalize application
+WORKDIR /home/superset
+
+COPY conf/superset_config.py /etc/superset/
+
+
+# Deploy application
 EXPOSE 8088
 HEALTHCHECK CMD ["curl", "-f", "http://localhost:8088/health"]
 CMD ["gunicorn", "superset:app"]
 USER superset
+    
+#RUN pip install -r database-dependencies.txt
+
+#HEALTHCHECK CMD ["curl", "-f", "http://localhost:8088/health"]
+#ENTRYPOINT ["docker-entrypoint.sh"]
+#EXPOSE 8088
 
 # docker build -t stevensotelo/aeps_superset:latest .

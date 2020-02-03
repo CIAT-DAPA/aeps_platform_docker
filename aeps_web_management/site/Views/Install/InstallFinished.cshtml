@@ -1,0 +1,29 @@
+﻿@{
+    ViewData["Title"] = Localizer["Title"];
+    ViewData["Action"] = Localizer["Action"];
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 class="section-title">@Localizer["Subtitle"]</h2>
+<p class="section-lead">@Localizer["Description"]</p>
+
+<div class="row">
+    <div class="col-12 col-md-6 col-lg-6">
+        <div class="card">
+            <div class="card-header buttons">
+                <h4>@Localizer["Subtitle"]</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-justify">
+                    @Localizer["Message"]
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+}

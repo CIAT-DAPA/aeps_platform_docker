@@ -17,6 +17,10 @@
         <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-universal-access"></i><span>@Localizer["Organization"]</span></a>
         <ul class="dropdown-menu">
             <li><a asp-area="" asp-controller="Associations" asp-action="Index">@Localizer["OrganizationAssociations"]</a></li>
+            <li><a asp-area="" asp-controller="Countries" asp-action="Index">@Localizer["OrganizationCountries"]</a></li>
+            <li><a asp-area="" asp-controller="States" asp-action="Index">@Localizer["OrganizationStates"]</a></li>
+            <li><a asp-area="" asp-controller="Municipalities" asp-action="Index">@Localizer["OrganizationMunicipalities"]</a></li>
+            <li><a asp-area="" asp-controller="Peoples" asp-action="Index">@Localizer["OrganizationPeople"]</a></li>
         </ul>
     </li>
     
@@ -33,15 +37,14 @@
     <li class="dropdown">
         <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-seedling"></i><span>@Localizer["ReportsCrop"]</span></a>
         <ul class="dropdown-menu">
-            <li><a asp-route-id="1" asp-controller="Reports" asp-action="Index">@Localizer["ReportsCropPerformance"]</a></li>
-            <li><a asp-route-id="2" asp-controller="Reports" asp-action="Index">@Localizer["ReportsCropPlantHealt"]</a></li>
+            <li><a asp-route-id="1" asp-controller="Reports" asp-action="Index" target="_blank">@Localizer["ReportsCropPerformance"]</a></li>            
         </ul>
     </li>
 
     <li class="dropdown">
         <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-signal"></i><span>@Localizer["ReportsManagement"]</span></a>
         <ul class="dropdown-menu">
-            <li><a asp-route-id="3" asp-controller="Reports" asp-action="Index">@Localizer["ReportsManagementPerformance"]</a></li>
+            <li><a asp-route-id="2" asp-controller="Reports" asp-action="Index" target="_blank">@Localizer["ReportsManagementPerformance"]</a></li>
         </ul>
     </li>
 

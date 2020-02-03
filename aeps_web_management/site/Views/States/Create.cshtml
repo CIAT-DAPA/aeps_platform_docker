@@ -1,0 +1,60 @@
+﻿@model CIAT.DAPA.AEPS.Data.Database.ConStates
+
+
+@{
+    ViewData["Title"] = Localizer["Title"];
+    ViewData["Action"] = Localizer["Action"];
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 class="section-title">@Localizer["Subtitle"]</h2>
+<p class="section-lead">@Localizer["Description"]</p>
+
+<div class="row">
+    <div class="col-12 col-md-12 col-lg-12">
+        <div class="card">
+            <div class="card-header buttons">
+                <h4>@Localizer["Options"]</h4>
+            </div>
+            <div class="card-body">
+                <a asp-action="Index" class="btn btn-icon btn-warning"><i class="fas fa-angle-left"></i> @Localizer["Return"]</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-md-6 col-lg-6">
+        <div class="card">
+            <div class="card-header buttons">
+                <h4>@Localizer["Subtitle"]</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group">
+                        <label asp-for="Country" class="control-label"></label>
+                        <select asp-for="Country" class="form-control" asp-items="ViewBag.Country"></select>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Name" class="control-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="ExtId" class="control-label"></label>
+                        <input asp-for="ExtId" class="form-control" />
+                        <span asp-validation-for="ExtId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" value="Create" class="btn btn-primary" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

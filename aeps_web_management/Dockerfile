@@ -5,6 +5,9 @@ WORKDIR /app
 
 #RUN wget -O /tmp/aeps_webadmin.tar.gz https://github.com/apache/incubator-superset/archive/${WEBADMIN_VERSION}.tar.gz && \
 #    tar xzf /tmp/aeps_webadmin.tar.gz -C ${WEBADMIN_HOME} --strip-components=1
+RUN apt-get update && \
+    apt-get install -y \
+        vim
 
 COPY site/ ./
 
